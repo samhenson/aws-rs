@@ -1,0 +1,13 @@
+[package]
+name = "aws"
+version = "0.1.0"
+authors = ["Sam Henson <sam@ranger.is>"]
+
+[dependencies]
+curl = "*"
+rand = "*"
+rust-crypto = "*"
+rustc-serialize = "*"
+tempdir = "*"
+time = "*"
+xml-rs = "*"
