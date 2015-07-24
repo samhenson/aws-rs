@@ -152,6 +152,15 @@ fn uri_encode (s : &str, encode_slash : bool) -> String {
     strs.concat()
 }
 
+fn header_is_set (headers: &[(&str, &str)], name : &str) -> bool {
+    for h in headers.iter() {
+        if h.0 == name {
+            return true;
+        }
+    }
+    false
+}
+
 fn aws_s3_request (method: &HttpMethod, region: AwsRegion, host: &str, uri: &str, query_str: &str, headers: &[(&str, &str)]) -> io::Result<http::Response> {
 
     // ----
@@ -195,7 +204,11 @@ fn aws_s3_request (method: &HttpMethod, region: AwsRegion, host: &str, uri: &str
     let mut all_headers : Vec<(&str, &str)> = Vec::new();
     all_headers.push(("Host", host));
     all_headers.push(("Date", &request_time));
-    all_headers.push(("Content-Type", "application/octet-stream"));
+
+    if ! header_is_set(headers, "Content-Type") {
+        all_headers.push(("Content-Type", "application/octet-stream"));
+    }
+
     all_headers.push(("x-amz-content-sha256", &content_hash));
 
     for h in headers.iter() {
