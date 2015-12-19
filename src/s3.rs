@@ -251,13 +251,13 @@ fn aws_s3_request (method: &HttpMethod, region: AwsRegion, host: &str, uri: &str
     header_names.sort();
     let canonical_headers_l : Vec<String> = header_list.into_iter().map(|(n,v)| n + ":" + &v + "\n" ).collect();
     let canonical_headers = canonical_headers_l.concat();
-    let signed_headers = header_names.connect(";");
+    let signed_headers = header_names.join(";");
 
     // ----
 
     query.sort_by(|a,b| a.0.cmp(&b.0));
     let query_strings : Vec<String> = query.into_iter().map(|(n,v)| n + "=" + &v).collect();
-    let canonical_query = query_strings.connect("&");
+    let canonical_query = query_strings.join("&");
 
     // ----
 
@@ -300,25 +300,25 @@ fn parse_xml_response (xml_str : &[u8], xpath : &str) -> Result<String, String> 
     let mut cur_path = PathBuf::from("/");
 
     let reader = io::Cursor::new(xml_str);
-    let mut parser = xml::reader::EventReader::new(reader);
-    for e in parser.events() {
+    let parser = xml::reader::EventReader::new(reader);
+    for e in parser {
         match e {
-            xml::reader::events::XmlEvent::StartElement { name, attributes: _, namespace: _ } => {
-                cur_path.push(name.to_repr());
+            Ok(xml::reader::XmlEvent::StartElement { name, attributes: _, namespace: _ }) => {
+                cur_path.push(name.borrow().local_name);
             },
-            xml::reader::events::XmlEvent::EndElement { name: _ } => {
+            Ok(xml::reader::XmlEvent::EndElement { name: _ }) => {
                 if cur_path.as_path() == path {
                     return Ok(String::new())
                 }
                 cur_path.pop();
             },
-            xml::reader::events::XmlEvent::Characters(s) => {
+            Ok(xml::reader::XmlEvent::Characters(s)) => {
                 if cur_path.as_path() == path {
                     return Ok(s)
                 }
             },
-            xml::reader::events::XmlEvent::Error(e) => {
-                return Err(format!("Received XmlEvent::Error - {:?}", e));
+            Err(e) => {
+                return Err(format!("Received xml::reader::Error - {:?}", e));
             }
             _ => { }
         }
